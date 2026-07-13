@@ -11,7 +11,8 @@ import {
   siteProgressionChapters
 } from "../data/siteProgression";
 
-const STORAGE_KEY = "automaths-diapo:v1";
+const STORAGE_KEY = "tempomaths";
+const LEGACY_STORAGE_KEY = "automaths-diapo:v1";
 
 export const defaultSettings: AppSettings = {
   levels: ["6e"],
@@ -129,11 +130,17 @@ export function loadStorage(): StoredPayload {
   };
 
   try {
-    const raw = window.localStorage.getItem(STORAGE_KEY);
+    const currentRaw = window.localStorage.getItem(STORAGE_KEY);
+    const legacyRaw = currentRaw ? null : window.localStorage.getItem(LEGACY_STORAGE_KEY);
+    const raw = currentRaw ?? legacyRaw;
     if (!raw) {
       return fallback;
     }
     const parsed = JSON.parse(raw) as Partial<StoredPayload>;
+    if (legacyRaw) {
+      window.localStorage.setItem(STORAGE_KEY, legacyRaw);
+      window.localStorage.removeItem(LEGACY_STORAGE_KEY);
+    }
     const mergedChapterLimitByLevel = clampChapterLimitByLevel({
       ...defaultSettings.chapterLimitByLevel,
       ...parsed.settings?.chapterLimitByLevel
@@ -179,6 +186,7 @@ export function loadStorage(): StoredPayload {
 
 export function saveStorage(payload: StoredPayload): void {
   window.localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
+  window.localStorage.removeItem(LEGACY_STORAGE_KEY);
 }
 
 export function updateStoredSettings(settings: AppSettings): void {
