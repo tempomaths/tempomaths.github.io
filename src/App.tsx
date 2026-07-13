@@ -301,6 +301,7 @@ export function App() {
   const rootClassName = [
     "app-root",
     `theme-${settings.theme}`,
+    stage === "app" && page === "progression-editor" ? "progression-editor-active" : "",
     settings.dysMode ? "dys-mode" : "",
     settings.reduceMotion ? "reduce-motion" : ""
   ]

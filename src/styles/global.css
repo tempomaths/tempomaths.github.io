@@ -9151,13 +9151,28 @@ body,
 }
 
 /* Éditeur de progression séparé. */
+.main-surface-progression-editor {
+  height:auto;
+  min-height:100vh;
+  overflow:visible;
+}
+.app-root.progression-editor-active {
+  height:100vh;
+  overflow-x:hidden;
+  overflow-y:auto;
+}
+.progression-editor-active .app-shell {
+  height:auto;
+  min-height:100vh;
+}
 .progression-editor-screen {
   display:grid;
-  grid-template-rows:auto auto minmax(0,1fr);
+  grid-template-rows:auto auto auto;
   gap:12px;
-  height:calc(100vh - 28px);
+  height:auto;
+  min-height:calc(100vh - 28px);
   min-width:0;
-  overflow:hidden;
+  overflow:visible;
 }
 .progression-editor-header { min-width:0; }
 .progression-editor-stats {
@@ -9205,6 +9220,7 @@ body,
 .progression-editor-layout {
   display:grid;
   grid-template-columns:minmax(260px,310px) minmax(0,1fr);
+  align-items:start;
   gap:12px;
   min-width:0;
   min-height:0;
@@ -9213,13 +9229,13 @@ body,
 .progression-editor-content {
   min-width:0;
   min-height:0;
-  overflow:hidden;
+  overflow:visible;
   background:var(--surface);
   border:1px solid var(--line);
   border-radius:16px;
   box-shadow:var(--shadow-soft);
 }
-.progression-editor-chapters { display:grid; grid-template-rows:auto minmax(0,1fr); }
+.progression-editor-chapters { display:grid; grid-template-rows:auto auto; }
 .progression-editor-panel-title,
 .progression-editor-slides-head {
   display:flex;
@@ -9241,7 +9257,7 @@ body,
   gap:6px;
   min-height:0;
   padding:8px;
-  overflow-y:auto;
+  overflow:visible;
 }
 .progression-editor-chapter-list > button {
   display:grid;
@@ -9358,7 +9374,7 @@ body,
   gap:8px;
   min-height:0;
   padding:10px;
-  overflow-y:auto;
+  overflow:visible;
 }
 .progression-editor-library {
   display:grid;
@@ -9366,7 +9382,7 @@ body,
   min-width:0;
   margin:10px 10px 0;
   padding:12px;
-  background:linear-gradient(145deg,rgb(34 211 238/.08),rgb(99 102 241/.07));
+  background:var(--surface-strong);
   border:1px solid rgb(34 211 238/.28);
   border-radius:14px;
 }
@@ -9454,9 +9470,9 @@ body,
 .progression-editor-library-list {
   display:grid;
   gap:6px;
-  max-height:250px;
+  max-height:none;
   min-width:0;
-  overflow-y:auto;
+  overflow:visible;
 }
 .progression-editor-library-list article {
   display:grid;
@@ -9514,19 +9530,6 @@ body,
 .progression-editor-slide-actions button { width:100%; }
 .progression-editor-remove { color:#b91c1c; }
 .progression-editor-empty { display:grid; place-items:center; min-height:130px; padding:24px; color:var(--muted); text-align:center; }
-
-@media (min-width:901px) {
-  .progression-editor-library {
-    position:absolute;
-    inset:10px;
-    z-index:10;
-    margin:0;
-    overflow-y:auto;
-    background:var(--surface);
-    box-shadow:0 18px 48px rgb(15 23 42/.22);
-  }
-  .progression-editor-library-list { max-height:none; }
-}
 
 @media (max-width:1100px) {
   .progression-editor-stats { grid-template-columns:1fr; }
