@@ -280,6 +280,8 @@ button:disabled {
   box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.13);
 }
 
+.nav-label-mobile { display:none; }
+
 .nav-button.active {
   background:
     linear-gradient(90deg, rgb(34 211 238 / 0.22), rgb(251 113 133 / 0.13)),
@@ -8906,6 +8908,18 @@ body,
     text-align:center;
     scroll-snap-align:center;
   }
+  .nav-button span {
+    display:block;
+    width:100%;
+    max-width:100%;
+    overflow:hidden;
+    line-height:1.1;
+    text-align:center;
+    text-overflow:ellipsis;
+    white-space:nowrap;
+  }
+  .nav-button .nav-label-desktop { display:none; }
+  .nav-button .nav-label-mobile { display:block; }
   .nav-button svg { width:19px; height:19px; flex:0 0 auto; }
 
   .main-surface,
@@ -9013,7 +9027,7 @@ body,
 }
 
 @media (max-width:420px) {
-  .nav-button { flex-basis:68px; width:68px; }
+  .nav-button { flex-basis:68px; width:68px; font-size:.6rem; }
   .home-command-levels { grid-template-columns:repeat(2,minmax(0,1fr)); }
   .home-command-chips { grid-template-columns:repeat(2,minmax(0,1fr)); }
   .home-command-actions { grid-template-columns:1fr; }
