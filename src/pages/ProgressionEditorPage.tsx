@@ -300,6 +300,16 @@ export function ProgressionEditorPage({
             <div><Layers3 size={17} /><strong>Chapitres de {levelLabels[level]}</strong></div>
             <span>{chapters.length} chapitres</span>
           </div>
+          <label className="progression-editor-chapter-select">
+            <span>Chapitre à modifier</span>
+            <select value={selectedChapter?.id ?? ""} onChange={(event) => setSelectedChapterId(event.target.value)}>
+              {chapters.map((chapter, index) => (
+                <option key={chapter.id} value={chapter.id}>
+                  {index + 1}. {chapter.title} · {chapterCounts.get(chapter.id) ?? 0} diapos
+                </option>
+              ))}
+            </select>
+          </label>
           <div className="progression-editor-chapter-list">
             {chapters.map((chapter, index) => {
               const hidden = hiddenChapterSet.has(chapter.id);
