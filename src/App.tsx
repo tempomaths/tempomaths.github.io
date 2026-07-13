@@ -9,6 +9,7 @@ import { AdvancedSettingsPage } from "./pages/AdvancedSettingsPage";
 import { EditorPage } from "./pages/EditorPage";
 import { SettingsPage } from "./pages/SettingsPage";
 import { ProgressionPage } from "./pages/ProgressionPage";
+import { ProgressionEditorPage } from "./pages/ProgressionEditorPage";
 import { FavoritesPage } from "./pages/FavoritesPage";
 import { BELT_STAGES, BeltTrainingPage, createBeltPreset } from "./pages/BeltTrainingPage";
 import { SlideshowView } from "./components/SlideshowView";
@@ -16,6 +17,7 @@ import { ResultsView } from "./components/ResultsView";
 import { defaultSettings, loadStorage, saveStorage } from "./services/storage";
 import { LEVELS } from "./utils/labels";
 import { resolveAutomatismePool } from "./utils/pool";
+import { applyProgressionCustomizations } from "./utils/progressionCustomization";
 
 type Stage = "app" | "slideshow" | "results";
 
@@ -33,9 +35,13 @@ export function App() {
   }, [stored]);
 
   const settings = stored.settings;
-  const allAutomatismes = useMemo(
+  const rawAutomatismes = useMemo(
     () => [...allOfficialAutomatismes, ...stored.customAutomatismes],
     [stored.customAutomatismes]
+  );
+  const allAutomatismes = useMemo(
+    () => applyProgressionCustomizations(rawAutomatismes, settings),
+    [rawAutomatismes, settings]
   );
 
   const eligibleAutomatismes = useMemo(
@@ -68,9 +74,17 @@ export function App() {
           ...current.settings.chapterOrderByLevel,
           ...next.chapterOrderByLevel
         },
-        chapterLevelOverrides: next.chapterLevelOverrides ?? current.settings.chapterLevelOverrides
+        chapterLevelOverrides: next.chapterLevelOverrides ?? current.settings.chapterLevelOverrides,
+        chapterTitleOverrides: next.chapterTitleOverrides ?? current.settings.chapterTitleOverrides,
+        hiddenChapterIds: next.hiddenChapterIds ?? current.settings.hiddenChapterIds,
+        automatismeChapterOverrides:
+          next.automatismeChapterOverrides ?? current.settings.automatismeChapterOverrides
       }
     }));
+  };
+
+  const updateDisabledIds = (next: string[]) => {
+    setStored((current) => ({ ...current, disabledIds: [...new Set(next)] }));
   };
 
   const startSeries = (seedOverride?: string) => {
@@ -153,7 +167,14 @@ export function App() {
   };
 
   const startSimilarSeries = (series: GeneratedSeries) => {
-    const nextSettings = { ...series.settings, seed: "" };
+    const nextSettings = {
+      ...settings,
+      ...series.settings,
+      chapterTitleOverrides: settings.chapterTitleOverrides,
+      hiddenChapterIds: settings.hiddenChapterIds,
+      automatismeChapterOverrides: settings.automatismeChapterOverrides,
+      seed: ""
+    };
     setStored((current) => ({ ...current, settings: { ...current.settings, ...nextSettings } }));
     try {
       const nextSeries = generateSeries(allAutomatismes, nextSettings, stored.disabledIds);
@@ -449,6 +470,15 @@ export function App() {
             settings={settings}
             automatismes={allAutomatismes}
             onSettingsChange={updateSettings}
+          />
+        )}
+        {page === "progression-editor" && (
+          <ProgressionEditorPage
+            settings={settings}
+            automatismes={rawAutomatismes}
+            disabledIds={stored.disabledIds}
+            onSettingsChange={updateSettings}
+            onDisabledIdsChange={updateDisabledIds}
           />
         )}
         {page === "settings" && (

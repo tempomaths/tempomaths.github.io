@@ -5,10 +5,10 @@ import {
   createDefaultChapterOrderByLevel,
   createDefaultChapterSelectionByLevel,
   getEffectiveChapterLevel,
-  getOrderedChaptersForLevel,
   progressionLevels
 } from "../data/siteProgression";
 import { domainLabels, levelLabels } from "../utils/labels";
+import { getCustomizedChaptersForLevel } from "../utils/progressionCustomization";
 
 type Props = {
   settings: AppSettings;
@@ -30,7 +30,7 @@ export function ProgressionPage({ settings, automatismes, onSettingsChange }: Pr
   const [dropTarget, setDropTarget] = useState<{ level: Level; index: number } | null>(null);
   const chaptersByLevel = progressionLevels.map((level) => ({
     level,
-    chapters: getOrderedChaptersForLevel(level, settings.chapterOrderByLevel, settings.chapterLevelOverrides)
+    chapters: getCustomizedChaptersForLevel(level, settings, true)
   }));
   const visibleChaptersByLevel = chaptersByLevel.filter((item) => visibleLevels.includes(item.level));
   const totalChapters = visibleChaptersByLevel.reduce((sum, item) => sum + item.chapters.length, 0);
@@ -44,7 +44,7 @@ export function ProgressionPage({ settings, automatismes, onSettingsChange }: Pr
   };
 
   const moveChapter = (level: Level, chapterId: string, direction: -1 | 1) => {
-    const order = getOrderedChaptersForLevel(level, settings.chapterOrderByLevel, settings.chapterLevelOverrides)
+    const order = getCustomizedChaptersForLevel(level, settings, true)
       .map((chapterItem) => chapterItem.id);
     const index = order.indexOf(chapterId);
     const nextIndex = index + direction;
@@ -79,7 +79,7 @@ export function ProgressionPage({ settings, automatismes, onSettingsChange }: Pr
 
     const nextOrderByLevel = { ...settings.chapterOrderByLevel };
     progressionLevels.forEach((level) => {
-      nextOrderByLevel[level] = getOrderedChaptersForLevel(level, settings.chapterOrderByLevel, settings.chapterLevelOverrides)
+      nextOrderByLevel[level] = getCustomizedChaptersForLevel(level, settings, true)
         .map((chapterItem) => chapterItem.id)
         .filter((id) => id !== chapter.id);
     });

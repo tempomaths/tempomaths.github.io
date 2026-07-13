@@ -181,6 +181,9 @@ export type GeneratorSettings = {
   selectedChapterIdsByLevel: ChapterSelectionByLevel;
   chapterOrderByLevel: ChapterOrderByLevel;
   chapterLevelOverrides: ChapterLevelOverrides;
+  chapterTitleOverrides: Record<string, string>;
+  hiddenChapterIds: string[];
+  automatismeChapterOverrides: Record<string, string>;
   includePreviousSteps: boolean;
   selectedDomains: MathDomain[];
   questionCount: number;

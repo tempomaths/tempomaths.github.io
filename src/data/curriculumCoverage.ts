@@ -3,12 +3,11 @@ import {
   createDefaultChapterOrderByLevel,
   createDefaultChapterSelectionByLevel,
   getChapterLimitFromProgression,
-  getChapterOrderIndex,
   getEffectiveChapterLevel,
-  getOrderedChaptersForLevel,
   siteProgressionChapters
 } from "./siteProgression";
 import { isCompletedLowerActiveLevel } from "../utils/levelSelection";
+import { getCustomizedChaptersForLevel } from "../utils/progressionCustomization";
 
 export type ChapterCoverage = {
   chapter: ChapterInfo;
@@ -34,11 +33,7 @@ export function getChapterAutomatismes(automatismes: Automatisme[], chapterId: s
 }
 
 export function getEffectiveChapterLimit(settings: AppSettings, level: Level): number {
-  const chapterCount = getOrderedChaptersForLevel(
-    level,
-    settings.chapterOrderByLevel,
-    settings.chapterLevelOverrides
-  ).length;
+  const chapterCount = getCustomizedChaptersForLevel(level, settings).length;
 
   if (isCompletedLowerActiveLevel(settings.levels, level)) {
     return Math.max(1, chapterCount);
@@ -64,6 +59,9 @@ export function getManualChapterSelectionCount(settings: AppSettings, level?: Le
 }
 
 export function isChapterSelected(settings: AppSettings, chapter: ChapterInfo): boolean {
+  if (settings.hiddenChapterIds.includes(chapter.id)) {
+    return false;
+  }
   const level = getEffectiveChapterLevel(chapter, settings.chapterLevelOverrides);
   const manualSelection = settings.selectedChapterIdsByLevel?.[level] ?? [];
   const manualSelectionActive = getManualChapterSelectionCount(settings) > 0;
@@ -77,7 +75,7 @@ export function isChapterSelected(settings: AppSettings, chapter: ChapterInfo): 
   }
 
   const limit = getEffectiveChapterLimit(settings, level);
-  const rank = getChapterOrderIndex(chapter.id, level, settings.chapterOrderByLevel);
+  const rank = getCustomizedChaptersForLevel(level, settings).findIndex((item) => item.id === chapter.id) + 1;
   return settings.includePreviousSteps ? rank <= limit : rank === limit;
 }
 
@@ -87,7 +85,7 @@ export function getLevelCoverage(
   level: Level
 ): LevelCoverage {
   const chapterLimit = getEffectiveChapterLimit(settings, level);
-  const chapters = getOrderedChaptersForLevel(level, settings.chapterOrderByLevel, settings.chapterLevelOverrides).map((chapter, index) => {
+  const chapters = getCustomizedChaptersForLevel(level, settings).map((chapter, index) => {
     const items = getChapterAutomatismes(automatismes, chapter.id);
     const difficulties = items.map((item) => item.difficulty);
     return {
@@ -124,6 +122,9 @@ export function getWeakChapters(automatismes: Automatisme[], minimumCount: numbe
       selectedChapterIdsByLevel: createDefaultChapterSelectionByLevel(),
       chapterOrderByLevel: createDefaultChapterOrderByLevel(),
       chapterLevelOverrides: {},
+      chapterTitleOverrides: {},
+      hiddenChapterIds: [],
+      automatismeChapterOverrides: {},
       includePreviousSteps: true,
       selectedDomains: [],
       questionCount: 10,

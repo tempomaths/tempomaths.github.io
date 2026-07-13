@@ -2,6 +2,7 @@ import { AlertTriangle, Award, Check, ChevronRight, Crown, Flame, LockKeyhole, P
 import { useMemo, useRef, useState, type CSSProperties } from "react";
 import { siteProgressionChapters } from "../data/siteProgression";
 import type { AppSettings, Automatisme, BeltAchievement, DifficultyMode, Level, TrainingContext } from "../types";
+import { getCustomizedChaptersForLevel } from "../utils/progressionCustomization";
 
 type Props = {
   settings: AppSettings;
@@ -75,7 +76,7 @@ export function isBeltStageUnlocked(stageIndex: number, validatedKeys: ReadonlyS
 export function createBeltPreset(settings: AppSettings, level: Level, stage: BeltStage): Partial<AppSettings> {
   const chapterLimit = stageLimit(level, stage);
   const questionCount = beltQuestionCount(level, stage);
-  const activeChapters = siteProgressionChapters[level].slice(0, chapterLimit);
+  const activeChapters = getCustomizedChaptersForLevel(level, settings).slice(0, chapterLimit);
   return {
     levels: [level],
     progressionByLevel: { ...settings.progressionByLevel, [level]: "end" },
@@ -110,7 +111,7 @@ export function BeltTrainingPage({ settings, automatismes, achievements, error, 
   const roadmapRef = useRef<HTMLElement>(null);
   const missionRef = useRef<HTMLElement>(null);
   const stage = BELT_STAGES.find((item) => item.key === selectedBelt) ?? BELT_STAGES[0];
-  const chapters = siteProgressionChapters[level];
+  const chapters = getCustomizedChaptersForLevel(level, settings);
   const chapterLimit = stageLimit(level, stage);
   const questionCount = beltQuestionCount(level, stage);
   const activeChapters = chapters.slice(0, chapterLimit);

@@ -22,6 +22,7 @@ export function getAvailableDomains(
     | "selectedChapterIdsByLevel"
     | "chapterOrderByLevel"
     | "chapterLevelOverrides"
+    | "hiddenChapterIds"
     | "includePreviousSteps"
   >
 ): MathDomain[] {
@@ -125,6 +126,7 @@ function matchesLevelProgression(
     | "selectedChapterIdsByLevel"
     | "chapterOrderByLevel"
     | "chapterLevelOverrides"
+    | "hiddenChapterIds"
     | "includePreviousSteps"
   >,
   manualChapterMode: boolean
@@ -148,8 +150,13 @@ function matchesLevelProgression(
   }
 
   const targetChapter = settings.chapterLimitByLevel?.[level] ?? 0;
+  const visibleChapterOrder = (settings.chapterOrderByLevel[level] ?? [])
+    .filter((chapterId) => !(settings.hiddenChapterIds ?? []).includes(chapterId));
+  const visibleChapterIndex = automatisme.chapterId ? visibleChapterOrder.indexOf(automatisme.chapterId) : -1;
   const chapterRank = automatisme.chapterId
-    ? getChapterOrderIndex(automatisme.chapterId, level, settings.chapterOrderByLevel)
+    ? (visibleChapterIndex >= 0
+        ? visibleChapterIndex + 1
+        : getChapterOrderIndex(automatisme.chapterId, level, settings.chapterOrderByLevel))
     : automatisme.chapterRank;
 
   if (typeof chapterRank === "number" && chapterRank < 999 && targetChapter > 0) {
@@ -181,6 +188,7 @@ export function filterAutomatismes(
     | "selectedChapterIdsByLevel"
     | "chapterOrderByLevel"
     | "chapterLevelOverrides"
+    | "hiddenChapterIds"
     | "includePreviousSteps"
     | "selectedDomains"
     | "difficultyMode"
@@ -194,6 +202,10 @@ export function filterAutomatismes(
 
   return automatismes.filter((automatisme) => {
     if (disabledIds.includes(automatisme.id)) {
+      return false;
+    }
+
+    if (automatisme.chapterId && (settings.hiddenChapterIds ?? []).includes(automatisme.chapterId)) {
       return false;
     }
 

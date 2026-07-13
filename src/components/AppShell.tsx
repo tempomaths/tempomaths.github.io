@@ -1,6 +1,7 @@
 import {
   Heart,
   Home,
+  BookOpenCheck,
   ListTree,
   PencilLine,
   Medal,
@@ -16,6 +17,7 @@ export type PageKey =
   | "favorites"
   | "belts"
   | "progression"
+  | "progression-editor"
   | "editor"
   | "settings";
 
@@ -31,6 +33,7 @@ const navItems: NavItem[] = [
   { key: "favorites", label: "Favoris", mobileLabel: "Favoris", icon: <Heart size={18} /> },
   { key: "advanced", label: "Atelier séance", mobileLabel: "Atelier", icon: <SlidersHorizontal size={18} /> },
   { key: "progression", label: "Progression", mobileLabel: "Progression", icon: <ListTree size={18} /> },
+  { key: "progression-editor", label: "Éditeur de progression", mobileLabel: "Programme", icon: <BookOpenCheck size={18} /> },
   { key: "editor", label: "Éditeur", mobileLabel: "Éditeur", icon: <PencilLine size={18} /> },
   { key: "settings", label: "Paramètres", mobileLabel: "Réglages", icon: <Settings size={18} /> },
   { key: "belts", label: "Parcours ceintures", mobileLabel: "Ceintures", icon: <Medal size={18} /> }

@@ -31,6 +31,9 @@ export const defaultSettings: AppSettings = {
   selectedChapterIdsByLevel: createDefaultChapterSelectionByLevel(),
   chapterOrderByLevel: createDefaultChapterOrderByLevel(),
   chapterLevelOverrides: {},
+  chapterTitleOverrides: {},
+  hiddenChapterIds: [],
+  automatismeChapterOverrides: {},
   includePreviousSteps: true,
   selectedDomains: [],
   questionCount: 10,
@@ -82,6 +85,24 @@ function cleanChapterLevelOverrides(
     }
   });
   return clean;
+}
+
+function cleanChapterTitleOverrides(value: Record<string, string> = {}): Record<string, string> {
+  return Object.fromEntries(
+    Object.entries(value)
+      .filter(([chapterId, title]) => allSiteProgressionChapterIds.has(chapterId) && title.trim().length > 0)
+      .map(([chapterId, title]) => [chapterId, title.trim().slice(0, 160)])
+  );
+}
+
+function cleanHiddenChapterIds(value: string[] = []): string[] {
+  return [...new Set(value)].filter((chapterId) => allSiteProgressionChapterIds.has(chapterId));
+}
+
+function cleanAutomatismeChapterOverrides(value: Record<string, string> = {}): Record<string, string> {
+  return Object.fromEntries(
+    Object.entries(value).filter(([, chapterId]) => allSiteProgressionChapterIds.has(chapterId))
+  );
 }
 
 function cleanChapterOrderByLevel(
@@ -169,6 +190,9 @@ export function loadStorage(): StoredPayload {
         selectedChapterIdsByLevel: mergedChapterSelectionByLevel,
         chapterOrderByLevel: mergedChapterOrderByLevel,
         chapterLevelOverrides: mergedChapterLevelOverrides,
+        chapterTitleOverrides: cleanChapterTitleOverrides(parsed.settings?.chapterTitleOverrides),
+        hiddenChapterIds: cleanHiddenChapterIds(parsed.settings?.hiddenChapterIds),
+        automatismeChapterOverrides: cleanAutomatismeChapterOverrides(parsed.settings?.automatismeChapterOverrides),
         selectedAutomatismeIds: cleanSelectedAutomatismeIds(parsed.settings?.selectedAutomatismeIds ?? [])
       },
       customAutomatismes: parsed.customAutomatismes ?? [],
