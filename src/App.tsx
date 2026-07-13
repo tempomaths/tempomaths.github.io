@@ -387,7 +387,10 @@ export function App() {
           result={activeResult}
           isFavorite={Boolean(activeFavoriteId) || stored.favoriteSlideshows.some((favorite) => favorite.series.id === activeSeries.id)}
           onToggleFavorite={() => toggleFavoriteSlideshow(activeSeries)}
-          onBack={() => { setPage("belts"); setStage("app"); }}
+          onBack={() => {
+            setPage(activeSeries.trainingContext?.kind === "belt" ? "belts" : "home");
+            setStage("app");
+          }}
           onReplay={() => activeSeries.trainingContext ? startBeltChallenge(activeSeries.trainingContext) : replaySeries(activeSeries)}
           onSimilar={() => startSimilarSeries(activeSeries)}
           onNextChallenge={nextBeltChallenge}
@@ -409,7 +412,6 @@ export function App() {
             onSettingsChange={updateSettings}
             onStart={() => startSeries()}
             onStartPreset={startPresetSeries}
-            onOpenAdvanced={() => setPage("advanced")}
             onOpenProgression={() => setPage("progression")}
           />
         )}

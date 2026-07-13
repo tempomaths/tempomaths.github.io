@@ -3,11 +3,9 @@ import {
   ArrowRight,
   BrainCircuit,
   CheckSquare,
-  ListTree,
   Play,
   RotateCcw,
   ShieldCheck,
-  SlidersHorizontal,
   Sparkles,
   Presentation,
   Shuffle,
@@ -35,7 +33,6 @@ type Props = {
   onSettingsChange: (next: Partial<AppSettings>) => void;
   onStart: () => void;
   onStartPreset: (next: Partial<AppSettings>) => void;
-  onOpenAdvanced: () => void;
   onOpenProgression: () => void;
 };
 
@@ -79,7 +76,6 @@ export function HomePage({
   onSettingsChange,
   onStart,
   onStartPreset,
-  onOpenAdvanced,
   onOpenProgression
 }: Props) {
   const [focusedChapterLevel, setFocusedChapterLevel] = useState<Level>(settings.levels[0] ?? "6e");
@@ -239,14 +235,6 @@ export function HomePage({
               Auto
             </button>
           )}
-          <button type="button" className="home-command-soft" onClick={onOpenProgression}>
-            <ListTree size={16} />
-            Progression
-          </button>
-          <button type="button" className="home-command-soft" onClick={onOpenAdvanced}>
-            <SlidersHorizontal size={16} />
-            Détaillé
-          </button>
           <button type="button" className="home-command-launch" onClick={onStart}>
             <Play size={20} />
             <span>Lancer</span>
