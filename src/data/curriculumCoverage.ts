@@ -125,6 +125,7 @@ export function getWeakChapters(automatismes: Automatisme[], minimumCount: numbe
       chapterTitleOverrides: {},
       hiddenChapterIds: [],
       automatismeChapterOverrides: {},
+      automatismeAdditionalChapterIds: {},
       includePreviousSteps: true,
       selectedDomains: [],
       questionCount: 10,

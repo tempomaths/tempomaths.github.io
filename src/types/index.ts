@@ -184,6 +184,7 @@ export type GeneratorSettings = {
   chapterTitleOverrides: Record<string, string>;
   hiddenChapterIds: string[];
   automatismeChapterOverrides: Record<string, string>;
+  automatismeAdditionalChapterIds: Record<string, string[]>;
   includePreviousSteps: boolean;
   selectedDomains: MathDomain[];
   questionCount: number;

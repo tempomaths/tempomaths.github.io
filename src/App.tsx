@@ -78,7 +78,9 @@ export function App() {
         chapterTitleOverrides: next.chapterTitleOverrides ?? current.settings.chapterTitleOverrides,
         hiddenChapterIds: next.hiddenChapterIds ?? current.settings.hiddenChapterIds,
         automatismeChapterOverrides:
-          next.automatismeChapterOverrides ?? current.settings.automatismeChapterOverrides
+          next.automatismeChapterOverrides ?? current.settings.automatismeChapterOverrides,
+        automatismeAdditionalChapterIds:
+          next.automatismeAdditionalChapterIds ?? current.settings.automatismeAdditionalChapterIds
       }
     }));
   };
@@ -173,6 +175,7 @@ export function App() {
       chapterTitleOverrides: settings.chapterTitleOverrides,
       hiddenChapterIds: settings.hiddenChapterIds,
       automatismeChapterOverrides: settings.automatismeChapterOverrides,
+      automatismeAdditionalChapterIds: settings.automatismeAdditionalChapterIds,
       seed: ""
     };
     setStored((current) => ({ ...current, settings: { ...current.settings, ...nextSettings } }));

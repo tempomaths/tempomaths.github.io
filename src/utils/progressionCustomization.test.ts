@@ -3,6 +3,7 @@ import { allOfficialAutomatismes } from "../data/allAutomatismes";
 import { defaultSettings } from "../services/storage";
 import {
   applyProgressionCustomizations,
+  createAdditionalAutomatismeId,
   getCustomizedChaptersForLevel
 } from "./progressionCustomization";
 
@@ -37,5 +38,37 @@ describe("progression customization", () => {
     expect(moved.chapterId).toBe("5e-chap-01");
     expect(moved.chapterTitle).toBe("Calculs personnalisés");
     expect(moved.levels).toEqual(["5e"]);
+  });
+
+  it("copies a slide into another level while preserving the original", () => {
+    const source = allOfficialAutomatismes.find((item) => item.chapterId === "6e-chap-01");
+    expect(source).toBeDefined();
+    const customized = {
+      ...defaultSettings,
+      chapterTitleOverrides: { "3e-chap-01": "Mon chapitre de troisième" },
+      automatismeAdditionalChapterIds: { [source!.id]: ["3e-chap-01"] }
+    };
+
+    const copies = applyProgressionCustomizations([source!], customized);
+
+    expect(copies).toHaveLength(2);
+    expect(copies[0].id).toBe(source!.id);
+    expect(copies[0].chapterId).toBe("6e-chap-01");
+    expect(copies[1].id).toBe(createAdditionalAutomatismeId(source!.id, "3e-chap-01"));
+    expect(copies[1].chapterId).toBe("3e-chap-01");
+    expect(copies[1].chapterTitle).toBe("Mon chapitre de troisième");
+    expect(copies[1].levels).toEqual(["3e"]);
+  });
+
+  it("does not duplicate a slide when its additional chapter is already its main chapter", () => {
+    const source = allOfficialAutomatismes.find((item) => item.chapterId === "6e-chap-01");
+    expect(source).toBeDefined();
+
+    const copies = applyProgressionCustomizations([source!], {
+      ...defaultSettings,
+      automatismeAdditionalChapterIds: { [source!.id]: ["6e-chap-01"] }
+    });
+
+    expect(copies).toHaveLength(1);
   });
 });

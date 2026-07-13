@@ -3,6 +3,7 @@ import { allOfficialAutomatismes } from "../data/allAutomatismes";
 import { defaultSettings } from "../services/storage";
 import type { GeneratorSettings } from "../types";
 import { generateSeries } from "./generateSeries";
+import { applyProgressionCustomizations, createAdditionalAutomatismeId } from "../utils/progressionCustomization";
 
 describe("generateSeries", () => {
   it("generates ten questions", () => {
@@ -147,5 +148,26 @@ describe("generateSeries", () => {
 
     expect(series.questions).toHaveLength(1);
     expect(series.questions[0].automatismeId).toBe(selected.id);
+  });
+
+  it("generates a slide copied into a chapter from another level", () => {
+    const source = allOfficialAutomatismes.find((item) => item.chapterId === "3e-chap-01");
+    if (!source) throw new Error("Expected a source slide in the first 3e chapter.");
+    const copiedId = createAdditionalAutomatismeId(source.id, "6e-chap-01");
+    const settings = {
+      ...defaultSettings,
+      levels: ["6e" as const],
+      automatismeAdditionalChapterIds: { [source.id]: ["6e-chap-01"] },
+      selectedAutomatismeIds: [copiedId],
+      questionCount: 1,
+      seed: "copied-slide"
+    };
+    const customized = applyProgressionCustomizations(allOfficialAutomatismes, settings);
+
+    const series = generateSeries(customized, settings);
+
+    expect(series.questions).toHaveLength(1);
+    expect(series.questions[0].automatismeId).toBe(copiedId);
+    expect(series.questions[0].chapterId).toBe("6e-chap-01");
   });
 });

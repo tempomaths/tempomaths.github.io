@@ -34,6 +34,7 @@ export const defaultSettings: AppSettings = {
   chapterTitleOverrides: {},
   hiddenChapterIds: [],
   automatismeChapterOverrides: {},
+  automatismeAdditionalChapterIds: {},
   includePreviousSteps: true,
   selectedDomains: [],
   questionCount: 10,
@@ -102,6 +103,18 @@ function cleanHiddenChapterIds(value: string[] = []): string[] {
 function cleanAutomatismeChapterOverrides(value: Record<string, string> = {}): Record<string, string> {
   return Object.fromEntries(
     Object.entries(value).filter(([, chapterId]) => allSiteProgressionChapterIds.has(chapterId))
+  );
+}
+
+function cleanAutomatismeAdditionalChapterIds(value: Record<string, string[]> = {}): Record<string, string[]> {
+  return Object.fromEntries(
+    Object.entries(value)
+      .map(([automatismeId, chapterIds]) => [
+        automatismeId,
+        [...new Set(Array.isArray(chapterIds) ? chapterIds : [])]
+          .filter((chapterId) => allSiteProgressionChapterIds.has(chapterId))
+      ])
+      .filter(([, chapterIds]) => (chapterIds as string[]).length > 0)
   );
 }
 
@@ -193,6 +206,7 @@ export function loadStorage(): StoredPayload {
         chapterTitleOverrides: cleanChapterTitleOverrides(parsed.settings?.chapterTitleOverrides),
         hiddenChapterIds: cleanHiddenChapterIds(parsed.settings?.hiddenChapterIds),
         automatismeChapterOverrides: cleanAutomatismeChapterOverrides(parsed.settings?.automatismeChapterOverrides),
+        automatismeAdditionalChapterIds: cleanAutomatismeAdditionalChapterIds(parsed.settings?.automatismeAdditionalChapterIds),
         selectedAutomatismeIds: cleanSelectedAutomatismeIds(parsed.settings?.selectedAutomatismeIds ?? [])
       },
       customAutomatismes: parsed.customAutomatismes ?? [],

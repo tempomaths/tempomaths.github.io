@@ -8,7 +8,23 @@ type ProgressionCustomizationSettings = Pick<
   | "chapterTitleOverrides"
   | "hiddenChapterIds"
   | "automatismeChapterOverrides"
+  | "automatismeAdditionalChapterIds"
 >;
+
+const ADDITIONAL_CHAPTER_SEPARATOR = "::chapter:";
+
+export function createAdditionalAutomatismeId(automatismeId: string, chapterId: string): string {
+  return `${automatismeId}${ADDITIONAL_CHAPTER_SEPARATOR}${chapterId}`;
+}
+
+export function parseAdditionalAutomatismeId(id: string): { sourceId: string; chapterId: string } | undefined {
+  const separatorIndex = id.lastIndexOf(ADDITIONAL_CHAPTER_SEPARATOR);
+  if (separatorIndex < 0) return undefined;
+  return {
+    sourceId: id.slice(0, separatorIndex),
+    chapterId: id.slice(separatorIndex + ADDITIONAL_CHAPTER_SEPARATOR.length)
+  };
+}
 
 export function customizeChapter(chapter: ChapterInfo, settings: ProgressionCustomizationSettings): ChapterInfo {
   return {
@@ -38,18 +54,34 @@ export function applyProgressionCustomizations(
   automatismes: Automatisme[],
   settings: ProgressionCustomizationSettings
 ): Automatisme[] {
-  return automatismes.map((automatisme) => {
-    const chapterId = getEffectiveAutomatismeChapterId(automatisme, settings);
+  const customizeAutomatisme = (automatisme: Automatisme, chapterId: string, id = automatisme.id): Automatisme => {
     const chapter = chapterId ? getChapterById(chapterId) : undefined;
     if (!chapterId || !chapter) return automatisme;
 
     const level = getEffectiveChapterLevel(chapter, settings.chapterLevelOverrides);
     return {
       ...automatisme,
+      id,
       chapterId,
       chapterRank: getChapterOrderIndex(chapterId, level, settings.chapterOrderByLevel),
       chapterTitle: settings.chapterTitleOverrides[chapterId] ?? chapter.title,
       levels: [level]
     };
+  };
+
+  return automatismes.flatMap((automatisme) => {
+    const primaryChapterId = getEffectiveAutomatismeChapterId(automatisme, settings);
+    const primary = primaryChapterId ? customizeAutomatisme(automatisme, primaryChapterId) : automatisme;
+    const additionalChapterIds = [...new Set(settings.automatismeAdditionalChapterIds[automatisme.id] ?? [])]
+      .filter((chapterId) => chapterId !== primaryChapterId && getChapterById(chapterId));
+
+    return [
+      primary,
+      ...additionalChapterIds.map((chapterId) => customizeAutomatisme(
+        automatisme,
+        chapterId,
+        createAdditionalAutomatismeId(automatisme.id, chapterId)
+      ))
+    ];
   });
 }
