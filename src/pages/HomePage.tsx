@@ -24,6 +24,7 @@ import {
   progressionShortLabels
 } from "../utils/labels";
 import { getHighestSelectedLevel, sortLevelsBySchoolOrder } from "../utils/levelSelection";
+import { getChronoChallengeIds } from "../utils/chronoChallenge";
 
 type Props = {
   settings: AppSettings;
@@ -93,6 +94,7 @@ export function HomePage({
   const mentalIdsForAllLevels = automatismes
     .filter((automatisme) => automatisme.tags.includes(PURE_MENTAL_TAG) && !automatisme.figureTemplate)
     .map((automatisme) => automatisme.id);
+  const chronoIdsForAllLevels = getChronoChallengeIds(automatismes);
   const mentalProjectionPreset = (preset: Partial<AppSettings>, allLevels = false): Partial<AppSettings> =>
     withPresentationFilter(settings, {
       includePreviousSteps: true,
@@ -361,6 +363,7 @@ export function HomePage({
             type="button"
             onClick={() =>
               onStartPreset(mentalProjectionPreset({
+                selectedAutomatismeIds: chronoIdsForAllLevels,
                 questionCount: 30,
                 durationSeconds: 12,
                 showTimer: true,
