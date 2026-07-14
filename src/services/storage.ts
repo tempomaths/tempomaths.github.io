@@ -59,6 +59,20 @@ export const defaultSettings: AppSettings = {
   reduceMotion: false
 };
 
+export function createDefaultStoredPayload(): StoredPayload {
+  return {
+    version: 1,
+    settings: defaultSettings,
+    customAutomatismes: [],
+    favoriteIds: [],
+    favoriteSlideshows: [],
+    disabledIds: [],
+    history: [],
+    seriesResults: [],
+    beltAchievements: []
+  };
+}
+
 function clampChapterLimitByLevel(value: AppSettings["chapterLimitByLevel"]): AppSettings["chapterLimitByLevel"] {
   return {
     "6e": Math.min(Math.max(1, value["6e"]), siteProgressionChapters["6e"].length),
@@ -150,18 +164,55 @@ function cleanChapterSelectionByLevel(
   ) as AppSettings["selectedChapterIdsByLevel"];
 }
 
-export function loadStorage(): StoredPayload {
-  const fallback: StoredPayload = {
+export function normalizeStoredPayload(parsed: Partial<StoredPayload>): StoredPayload {
+  const fallback = createDefaultStoredPayload();
+  const mergedChapterLimitByLevel = clampChapterLimitByLevel({
+    ...defaultSettings.chapterLimitByLevel,
+    ...parsed.settings?.chapterLimitByLevel
+  });
+  const mergedChapterLevelOverrides = cleanChapterLevelOverrides(parsed.settings?.chapterLevelOverrides);
+  const mergedChapterOrderByLevel = cleanChapterOrderByLevel(
+    parsed.settings?.chapterOrderByLevel,
+    mergedChapterLevelOverrides
+  );
+  const mergedChapterSelectionByLevel = cleanChapterSelectionByLevel(
+    parsed.settings?.selectedChapterIdsByLevel,
+    mergedChapterLevelOverrides
+  );
+
+  return {
+    ...fallback,
+    ...parsed,
     version: 1,
-    settings: defaultSettings,
-    customAutomatismes: [],
-    favoriteIds: [],
-    favoriteSlideshows: [],
-    disabledIds: [],
-    history: [],
-    seriesResults: [],
-    beltAchievements: []
+    settings: {
+      ...defaultSettings,
+      ...parsed.settings,
+      progressionByLevel: {
+        ...defaultSettings.progressionByLevel,
+        ...parsed.settings?.progressionByLevel
+      },
+      chapterLimitByLevel: mergedChapterLimitByLevel,
+      selectedChapterIdsByLevel: mergedChapterSelectionByLevel,
+      chapterOrderByLevel: mergedChapterOrderByLevel,
+      chapterLevelOverrides: mergedChapterLevelOverrides,
+      chapterTitleOverrides: cleanChapterTitleOverrides(parsed.settings?.chapterTitleOverrides),
+      hiddenChapterIds: cleanHiddenChapterIds(parsed.settings?.hiddenChapterIds),
+      automatismeChapterOverrides: cleanAutomatismeChapterOverrides(parsed.settings?.automatismeChapterOverrides),
+      automatismeAdditionalChapterIds: cleanAutomatismeAdditionalChapterIds(parsed.settings?.automatismeAdditionalChapterIds),
+      selectedAutomatismeIds: cleanSelectedAutomatismeIds(parsed.settings?.selectedAutomatismeIds ?? [])
+    },
+    customAutomatismes: Array.isArray(parsed.customAutomatismes) ? parsed.customAutomatismes : [],
+    favoriteIds: Array.isArray(parsed.favoriteIds) ? parsed.favoriteIds : [],
+    favoriteSlideshows: Array.isArray(parsed.favoriteSlideshows) ? parsed.favoriteSlideshows : [],
+    disabledIds: Array.isArray(parsed.disabledIds) ? parsed.disabledIds : [],
+    history: Array.isArray(parsed.history) ? parsed.history : [],
+    seriesResults: Array.isArray(parsed.seriesResults) ? parsed.seriesResults : [],
+    beltAchievements: Array.isArray(parsed.beltAchievements) ? parsed.beltAchievements : []
   };
+}
+
+export function loadStorage(): StoredPayload {
+  const fallback = createDefaultStoredPayload();
 
   try {
     const currentRaw = window.localStorage.getItem(STORAGE_KEY);
@@ -175,48 +226,7 @@ export function loadStorage(): StoredPayload {
       window.localStorage.setItem(STORAGE_KEY, legacyRaw);
       window.localStorage.removeItem(LEGACY_STORAGE_KEY);
     }
-    const mergedChapterLimitByLevel = clampChapterLimitByLevel({
-      ...defaultSettings.chapterLimitByLevel,
-      ...parsed.settings?.chapterLimitByLevel
-    });
-    const mergedChapterLevelOverrides = cleanChapterLevelOverrides(parsed.settings?.chapterLevelOverrides);
-    const mergedChapterOrderByLevel = cleanChapterOrderByLevel(
-      parsed.settings?.chapterOrderByLevel,
-      mergedChapterLevelOverrides
-    );
-    const mergedChapterSelectionByLevel = cleanChapterSelectionByLevel(
-      parsed.settings?.selectedChapterIdsByLevel,
-      mergedChapterLevelOverrides
-    );
-
-    return {
-      ...fallback,
-      ...parsed,
-      settings: {
-        ...defaultSettings,
-        ...parsed.settings,
-        progressionByLevel: {
-          ...defaultSettings.progressionByLevel,
-          ...parsed.settings?.progressionByLevel
-        },
-        chapterLimitByLevel: mergedChapterLimitByLevel,
-        selectedChapterIdsByLevel: mergedChapterSelectionByLevel,
-        chapterOrderByLevel: mergedChapterOrderByLevel,
-        chapterLevelOverrides: mergedChapterLevelOverrides,
-        chapterTitleOverrides: cleanChapterTitleOverrides(parsed.settings?.chapterTitleOverrides),
-        hiddenChapterIds: cleanHiddenChapterIds(parsed.settings?.hiddenChapterIds),
-        automatismeChapterOverrides: cleanAutomatismeChapterOverrides(parsed.settings?.automatismeChapterOverrides),
-        automatismeAdditionalChapterIds: cleanAutomatismeAdditionalChapterIds(parsed.settings?.automatismeAdditionalChapterIds),
-        selectedAutomatismeIds: cleanSelectedAutomatismeIds(parsed.settings?.selectedAutomatismeIds ?? [])
-      },
-      customAutomatismes: parsed.customAutomatismes ?? [],
-      favoriteIds: parsed.favoriteIds ?? [],
-      favoriteSlideshows: parsed.favoriteSlideshows ?? [],
-      disabledIds: parsed.disabledIds ?? [],
-      history: parsed.history ?? [],
-      seriesResults: parsed.seriesResults ?? [],
-      beltAchievements: parsed.beltAchievements ?? []
-    };
+    return normalizeStoredPayload(parsed);
   } catch {
     return fallback;
   }

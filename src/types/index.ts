@@ -284,3 +284,12 @@ export type StoredPayload = {
   seriesResults: SeriesResult[];
   beltAchievements: BeltAchievement[];
 };
+
+export type TempoMathsProfile = {
+  kind: "tempomaths-profile";
+  formatVersion: 1;
+  id: string;
+  name: string;
+  savedAt: string;
+  payload: StoredPayload;
+};

@@ -7,7 +7,8 @@ import {
   Medal,
   Settings,
   SlidersHorizontal,
-  Sparkles
+  Sparkles,
+  UserRound
 } from "lucide-react";
 import type { ReactNode } from "react";
 
@@ -19,6 +20,7 @@ export type PageKey =
   | "progression"
   | "progression-editor"
   | "editor"
+  | "profile"
   | "settings";
 
 type NavItem = {
@@ -35,6 +37,7 @@ const navItems: NavItem[] = [
   { key: "progression", label: "Progression", mobileLabel: "Progression", icon: <ListTree size={18} /> },
   { key: "progression-editor", label: "Éditeur de progression", mobileLabel: "Programme", icon: <BookOpenCheck size={18} /> },
   { key: "editor", label: "Éditeur", mobileLabel: "Éditeur", icon: <PencilLine size={18} /> },
+  { key: "profile", label: "Profil", mobileLabel: "Profil", icon: <UserRound size={18} /> },
   { key: "settings", label: "Paramètres", mobileLabel: "Réglages", icon: <Settings size={18} /> },
   { key: "belts", label: "Parcours ceintures", mobileLabel: "Ceintures", icon: <Medal size={18} /> }
 ];

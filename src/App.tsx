@@ -11,10 +11,11 @@ import { SettingsPage } from "./pages/SettingsPage";
 import { ProgressionPage } from "./pages/ProgressionPage";
 import { ProgressionEditorPage } from "./pages/ProgressionEditorPage";
 import { FavoritesPage } from "./pages/FavoritesPage";
+import { ProfilePage } from "./pages/ProfilePage";
 import { BELT_STAGES, BeltTrainingPage, createBeltPreset } from "./pages/BeltTrainingPage";
 import { SlideshowView } from "./components/SlideshowView";
 import { ResultsView } from "./components/ResultsView";
-import { defaultSettings, loadStorage, saveStorage } from "./services/storage";
+import { defaultSettings, loadStorage, normalizeStoredPayload, saveStorage } from "./services/storage";
 import { LEVELS } from "./utils/labels";
 import { resolveAutomatismePool } from "./utils/pool";
 import { applyProgressionCustomizations } from "./utils/progressionCustomization";
@@ -302,6 +303,7 @@ export function App() {
     "app-root",
     `theme-${settings.theme}`,
     stage === "app" && page === "progression-editor" ? "progression-editor-active" : "",
+    stage === "app" && page === "profile" ? "profile-page-active" : "",
     settings.dysMode ? "dys-mode" : "",
     settings.reduceMotion ? "reduce-motion" : ""
   ]
@@ -487,6 +489,18 @@ export function App() {
         )}
         {page === "settings" && (
           <SettingsPage settings={settings} onSettingsChange={updateSettings} />
+        )}
+        {page === "profile" && (
+          <ProfilePage
+            stored={stored}
+            onRestore={(payload) => {
+              setStored(normalizeStoredPayload(payload));
+              setError("");
+              setActiveSeries(null);
+              setActiveResult(null);
+              setActiveFavoriteId(null);
+            }}
+          />
         )}
       </AppShell>
     </div>
