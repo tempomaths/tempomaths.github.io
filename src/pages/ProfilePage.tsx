@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState, type ChangeEvent } from "react";
+import { useRef, useState, type ChangeEvent } from "react";
 import {
   CheckCircle2,
   Download,
@@ -53,26 +53,9 @@ function downloadProfile(profile: TempoMathsProfile): void {
 export function ProfilePage({ stored, onRestore }: ProfilePageProps) {
   const [profileName, setProfileName] = useState("Mon profil TempoMaths");
   const [profiles, setProfiles] = useState<TempoMathsProfile[]>(() => loadLocalProfiles());
-  const [importedProfile, setImportedProfile] = useState<TempoMathsProfile | null>(null);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
   const fileInputRef = useRef<HTMLInputElement>(null);
-
-  const summary = useMemo(() => {
-    const settings = stored.settings;
-    const progressionChanges =
-      Object.keys(settings.chapterTitleOverrides).length +
-      Object.keys(settings.chapterLevelOverrides).length +
-      settings.hiddenChapterIds.length +
-      Object.values(settings.automatismeChapterOverrides).length +
-      Object.values(settings.automatismeAdditionalChapterIds).reduce((total, ids) => total + ids.length, 0);
-    return {
-      progressionChanges,
-      customSlides: stored.customAutomatismes.length,
-      favorites: stored.favoriteSlideshows.length,
-      belts: stored.beltAchievements.length
-    };
-  }, [stored]);
 
   const clearStatus = () => {
     setMessage("");
@@ -85,13 +68,6 @@ export function ProfilePage({ stored, onRestore }: ProfilePageProps) {
     setProfiles(upsertLocalProfile(profile));
     setProfileName(profile.name);
     setMessage(`Le profil « ${profile.name} » est sauvegardé sur cet appareil.`);
-  };
-
-  const exportCurrent = () => {
-    clearStatus();
-    const profile = createProfile(profileName, stored);
-    downloadProfile(profile);
-    setMessage("Le fichier du profil est prêt à être transféré sur un autre ordinateur.");
   };
 
   const restoreProfile = (profile: TempoMathsProfile) => {
@@ -107,20 +83,15 @@ export function ProfilePage({ stored, onRestore }: ProfilePageProps) {
     event.target.value = "";
     if (!file) return;
     try {
-      const profile = parseProfile(await file.text());
-      setImportedProfile(profile);
-      setMessage(`Le fichier « ${profile.name} » est valide. Vous pouvez maintenant le charger.`);
+      const imported = parseProfile(await file.text());
+      const localCopy = createProfile(imported.name, imported.payload);
+      setProfiles(upsertLocalProfile(localCopy));
+      onRestore(localCopy.payload);
+      setProfileName(localCopy.name);
+      setMessage(`Le profil « ${localCopy.name} » est importé, enregistré et maintenant actif.`);
     } catch (caught) {
-      setImportedProfile(null);
       setError(caught instanceof Error ? caught.message : "Import du profil impossible.");
     }
-  };
-
-  const keepImportedLocally = () => {
-    if (!importedProfile) return;
-    const localCopy = createProfile(importedProfile.name, importedProfile.payload);
-    setProfiles(upsertLocalProfile(localCopy));
-    setMessage(`Le profil « ${localCopy.name} » est conservé sur cet appareil.`);
   };
 
   return (
@@ -128,18 +99,11 @@ export function ProfilePage({ stored, onRestore }: ProfilePageProps) {
       <header className="profile-hero">
         <div className="profile-hero-icon"><UserRound size={30} /></div>
         <div>
-          <span className="profile-eyebrow">Sauvegarde complète</span>
+          <span className="profile-eyebrow">Vos données TempoMaths</span>
           <h1>Profil</h1>
-          <p>Gardez toute votre configuration TempoMaths et retrouvez-la sur ce PC ou un autre.</p>
+          <p>Enregistrez votre travail ou récupérez-le sur un autre ordinateur.</p>
         </div>
       </header>
-
-      <section className="profile-summary" aria-label="Contenu du profil actuel">
-        <article><strong>{summary.progressionChanges}</strong><span>modifications de progression</span></article>
-        <article><strong>{summary.customSlides}</strong><span>diapos créées</span></article>
-        <article><strong>{summary.favorites}</strong><span>diaporamas favoris</span></article>
-        <article><strong>{summary.belts}</strong><span>étapes de ceinture enregistrées</span></article>
-      </section>
 
       {(message || error) && (
         <div className={error ? "profile-alert error" : "profile-alert success"} role="status">
@@ -153,8 +117,9 @@ export function ProfilePage({ stored, onRestore }: ProfilePageProps) {
           <div className="profile-card-heading">
             <HardDriveDownload size={23} />
             <div>
-              <h2>Sauvegarder le profil actuel</h2>
-              <p>La copie locale permet de retrouver plusieurs configurations sur ce même appareil.</p>
+              <span className="profile-choice-label">Sur cet appareil</span>
+              <h2>Sauvegarder mon travail</h2>
+              <p>Donnez un nom à l’état actuel de TempoMaths.</p>
             </div>
           </div>
           <label className="profile-name-field">
@@ -166,17 +131,11 @@ export function ProfilePage({ stored, onRestore }: ProfilePageProps) {
               placeholder="Ex. Collège 2026-2027"
             />
           </label>
-          <div className="profile-actions">
-            <button className="profile-primary-button" type="button" onClick={saveCurrentLocally}>
-              <Save size={18} /> Sauvegarder sur cet appareil
-            </button>
-            <button className="profile-secondary-button" type="button" onClick={exportCurrent}>
-              <Download size={18} /> Exporter vers un fichier
-            </button>
-          </div>
+          <button className="profile-primary-button profile-main-action" type="button" onClick={saveCurrentLocally}>
+            <Save size={18} /> Sauvegarder maintenant
+          </button>
           <p className="profile-scope-note">
-            Inclus : réglages, progressions modifiées, chapitres et diapos masqués ou déplacés, diapos créées,
-            favoris, historique, résultats et parcours de ceintures.
+            Tout est inclus : progressions, diapos, favoris, historique et parcours de ceintures.
           </p>
         </section>
 
@@ -184,8 +143,9 @@ export function ProfilePage({ stored, onRestore }: ProfilePageProps) {
           <div className="profile-card-heading">
             <FileUp size={23} />
             <div>
-              <h2>Charger depuis un autre PC</h2>
-              <p>Sélectionnez un fichier <code>.tempomaths-profile.json</code> précédemment exporté.</p>
+              <span className="profile-choice-label">Depuis un fichier</span>
+              <h2>Récupérer mon travail</h2>
+              <p>Choisissez le fichier téléchargé depuis TempoMaths sur votre autre ordinateur.</p>
             </div>
           </div>
           <input
@@ -195,25 +155,12 @@ export function ProfilePage({ stored, onRestore }: ProfilePageProps) {
             accept=".json,.tempomaths-profile.json,application/json"
             onChange={handleImport}
           />
-          <button className="profile-primary-button" type="button" onClick={() => fileInputRef.current?.click()}>
-            <FileUp size={18} /> Choisir un fichier de profil
+          <button className="profile-primary-button profile-main-action" type="button" onClick={() => fileInputRef.current?.click()}>
+            <FileUp size={18} /> Importer un profil
           </button>
-          {importedProfile && (
-            <div className="profile-import-preview">
-              <div>
-                <strong>{importedProfile.name}</strong>
-                <span>Sauvegardé le {formatDate(importedProfile.savedAt)}</span>
-              </div>
-              <div className="profile-actions">
-                <button className="profile-primary-button" type="button" onClick={() => restoreProfile(importedProfile)}>
-                  <RefreshCw size={17} /> Charger ce profil
-                </button>
-                <button className="profile-secondary-button" type="button" onClick={keepImportedLocally}>
-                  <Save size={17} /> Conserver sur ce PC
-                </button>
-              </div>
-            </div>
-          )}
+          <p className="profile-scope-note">
+            Le profil sera automatiquement enregistré sur ce PC et immédiatement activé.
+          </p>
         </section>
       </div>
 
@@ -221,8 +168,8 @@ export function ProfilePage({ stored, onRestore }: ProfilePageProps) {
         <div className="profile-card-heading">
           <FolderClock size={23} />
           <div>
-            <h2>Profils enregistrés sur cet appareil</h2>
-            <p>Charger un profil remplace les données actuellement actives par celles de sa sauvegarde.</p>
+            <h2>Mes sauvegardes</h2>
+            <p>Utilisez une sauvegarde ici, ou téléchargez-la pour l’emporter sur un autre PC.</p>
           </div>
         </div>
         {profiles.length === 0 ? (
@@ -240,10 +187,10 @@ export function ProfilePage({ stored, onRestore }: ProfilePageProps) {
                 </div>
                 <div className="profile-list-actions">
                   <button className="profile-primary-button" type="button" onClick={() => restoreProfile(profile)}>
-                    <RefreshCw size={17} /> Charger
+                    <RefreshCw size={17} /> Utiliser
                   </button>
                   <button className="profile-secondary-button" type="button" onClick={() => downloadProfile(profile)}>
-                    <Download size={17} /> Exporter
+                    <Download size={17} /> Télécharger
                   </button>
                   <button
                     className="profile-delete-button"
