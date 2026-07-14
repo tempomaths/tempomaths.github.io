@@ -1,15 +1,5 @@
-import { useRef, useState, type ChangeEvent } from "react";
-import {
-  CheckCircle2,
-  Download,
-  FileUp,
-  FolderClock,
-  HardDriveDownload,
-  RefreshCw,
-  Save,
-  Trash2,
-  UserRound
-} from "lucide-react";
+import { useMemo, useRef, useState, type ChangeEvent } from "react";
+import { CheckCircle2, Download, FileUp, Save, Trash2, UserRound } from "lucide-react";
 import type { StoredPayload, TempoMathsProfile } from "../types";
 import {
   createProfile,
@@ -51,30 +41,41 @@ function downloadProfile(profile: TempoMathsProfile): void {
 }
 
 export function ProfilePage({ stored, onRestore }: ProfilePageProps) {
+  const initialProfiles = useMemo(() => loadLocalProfiles(), []);
   const [profileName, setProfileName] = useState("Mon profil TempoMaths");
-  const [profiles, setProfiles] = useState<TempoMathsProfile[]>(() => loadLocalProfiles());
+  const [profiles, setProfiles] = useState<TempoMathsProfile[]>(initialProfiles);
+  const [selectedProfileId, setSelectedProfileId] = useState("");
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const selectedProfile = profiles.find((profile) => profile.id === selectedProfileId) ?? null;
 
   const clearStatus = () => {
     setMessage("");
     setError("");
   };
 
-  const saveCurrentLocally = () => {
+  const activateProfile = (profile: TempoMathsProfile) => {
     clearStatus();
-    const profile = createProfile(profileName, stored);
-    setProfiles(upsertLocalProfile(profile));
-    setProfileName(profile.name);
-    setMessage(`Le profil « ${profile.name} » est sauvegardé sur cet appareil.`);
+    setSelectedProfileId(profile.id);
+    onRestore(profile.payload);
+    setMessage(`Le profil « ${profile.name} » est maintenant actif.`);
   };
 
-  const restoreProfile = (profile: TempoMathsProfile) => {
+  const saveCurrentProfile = () => {
     clearStatus();
-    onRestore(profile.payload);
+    const profile = createProfile(profileName, stored);
+    const nextProfiles = upsertLocalProfile(profile);
+    setProfiles(nextProfiles);
+    setSelectedProfileId(profile.id);
     setProfileName(profile.name);
-    setMessage(`Le profil « ${profile.name} » a été chargé. Toutes ses données sont maintenant actives.`);
+    setMessage(`Le profil « ${profile.name} » est enregistré.`);
+  };
+
+  const handleProfileSelection = (event: ChangeEvent<HTMLSelectElement>) => {
+    const profile = profiles.find((item) => item.id === event.target.value);
+    if (profile) activateProfile(profile);
   };
 
   const handleImport = async (event: ChangeEvent<HTMLInputElement>) => {
@@ -86,22 +87,30 @@ export function ProfilePage({ stored, onRestore }: ProfilePageProps) {
       const imported = parseProfile(await file.text());
       const localCopy = createProfile(imported.name, imported.payload);
       setProfiles(upsertLocalProfile(localCopy));
+      setSelectedProfileId(localCopy.id);
       onRestore(localCopy.payload);
-      setProfileName(localCopy.name);
-      setMessage(`Le profil « ${localCopy.name} » est importé, enregistré et maintenant actif.`);
+      setMessage(`Le profil « ${localCopy.name} » a été chargé depuis le fichier.`);
     } catch (caught) {
-      setError(caught instanceof Error ? caught.message : "Import du profil impossible.");
+      setError(caught instanceof Error ? caught.message : "Chargement du profil impossible.");
     }
   };
 
+  const removeSelectedProfile = () => {
+    if (!selectedProfile) return;
+    const nextProfiles = deleteLocalProfile(selectedProfile.id);
+    setProfiles(nextProfiles);
+    setSelectedProfileId("");
+    setMessage(`Le profil « ${selectedProfile.name} » a été supprimé.`);
+  };
+
   return (
-    <div className="profile-page">
+    <div className="profile-page profile-page-simple">
       <header className="profile-hero">
         <div className="profile-hero-icon"><UserRound size={30} /></div>
         <div>
           <span className="profile-eyebrow">Vos données TempoMaths</span>
           <h1>Profil</h1>
-          <p>Enregistrez votre travail ou récupérez-le sur un autre ordinateur.</p>
+          <p>Choisissez un profil enregistré ou transférez-le sur un autre ordinateur.</p>
         </div>
       </header>
 
@@ -112,18 +121,46 @@ export function ProfilePage({ stored, onRestore }: ProfilePageProps) {
         </div>
       )}
 
-      <div className="profile-grid">
-        <section className="profile-card profile-save-card">
-          <div className="profile-card-heading">
-            <HardDriveDownload size={23} />
-            <div>
-              <span className="profile-choice-label">Sur cet appareil</span>
-              <h2>Sauvegarder mon travail</h2>
-              <p>Donnez un nom à l’état actuel de TempoMaths.</p>
-            </div>
+      <section className="profile-card profile-control-card">
+        <div className="profile-section-title">
+          <span>1</span>
+          <div>
+            <h2>Choisir un profil</h2>
+            <p>La sélection charge automatiquement toutes les données du profil.</p>
           </div>
+        </div>
+
+        <label className="profile-select-field">
+          <span>Profil enregistré</span>
+          <select value={selectedProfileId} onChange={handleProfileSelection}>
+            <option value="" disabled>{profiles.length ? "Choisir un profil…" : "Aucun profil enregistré"}</option>
+            {profiles.map((profile) => (
+              <option key={profile.id} value={profile.id}>
+                {profile.name} — {formatDate(profile.savedAt)}
+              </option>
+            ))}
+          </select>
+        </label>
+
+        {selectedProfile && (
+          <div className="profile-selected-details">
+            <span>{selectedProfile.payload.customAutomatismes.length} diapo(s) créée(s)</span>
+            <span>{selectedProfile.payload.beltAchievements.length} étape(s) de ceinture</span>
+          </div>
+        )}
+      </section>
+
+      <section className="profile-card profile-control-card">
+        <div className="profile-section-title">
+          <span>2</span>
+          <div>
+            <h2>Enregistrer le profil actuel</h2>
+            <p>Progressions, diapos, favoris, historique et ceintures seront inclus.</p>
+          </div>
+        </div>
+        <div className="profile-save-row">
           <label className="profile-name-field">
-            <span>Nom du profil</span>
+            <span>Nom du nouveau profil</span>
             <input
               value={profileName}
               maxLength={80}
@@ -131,83 +168,48 @@ export function ProfilePage({ stored, onRestore }: ProfilePageProps) {
               placeholder="Ex. Collège 2026-2027"
             />
           </label>
-          <button className="profile-primary-button profile-main-action" type="button" onClick={saveCurrentLocally}>
-            <Save size={18} /> Sauvegarder maintenant
+          <button className="profile-primary-button" type="button" onClick={saveCurrentProfile}>
+            <Save size={18} /> Enregistrer ce profil
           </button>
-          <p className="profile-scope-note">
-            Tout est inclus : progressions, diapos, favoris, historique et parcours de ceintures.
-          </p>
-        </section>
+        </div>
+      </section>
 
-        <section className="profile-card profile-import-card">
-          <div className="profile-card-heading">
-            <FileUp size={23} />
-            <div>
-              <span className="profile-choice-label">Depuis un fichier</span>
-              <h2>Récupérer mon travail</h2>
-              <p>Choisissez le fichier téléchargé depuis TempoMaths sur votre autre ordinateur.</p>
-            </div>
-          </div>
-          <input
-            ref={fileInputRef}
-            className="profile-file-input"
-            type="file"
-            accept=".json,.tempomaths-profile.json,application/json"
-            onChange={handleImport}
-          />
-          <button className="profile-primary-button profile-main-action" type="button" onClick={() => fileInputRef.current?.click()}>
-            <FileUp size={18} /> Importer un profil
-          </button>
-          <p className="profile-scope-note">
-            Le profil sera automatiquement enregistré sur ce PC et immédiatement activé.
-          </p>
-        </section>
-      </div>
-
-      <section className="profile-card profile-library">
-        <div className="profile-card-heading">
-          <FolderClock size={23} />
+      <section className="profile-card profile-control-card">
+        <div className="profile-section-title">
+          <span>3</span>
           <div>
-            <h2>Mes sauvegardes</h2>
-            <p>Utilisez une sauvegarde ici, ou téléchargez-la pour l’emporter sur un autre PC.</p>
+            <h2>Transférer mon profil</h2>
+            <p>Sauvegardez le profil choisi, puis chargez ce fichier sur l’autre ordinateur.</p>
           </div>
         </div>
-        {profiles.length === 0 ? (
-          <div className="profile-empty">Aucun profil local pour le moment.</div>
-        ) : (
-          <div className="profile-list">
-            {profiles.map((profile) => (
-              <article key={profile.id}>
-                <div className="profile-list-copy">
-                  <strong>{profile.name}</strong>
-                  <span>Sauvegardé le {formatDate(profile.savedAt)}</span>
-                  <small>
-                    {profile.payload.customAutomatismes.length} diapo(s) créée(s) · {profile.payload.beltAchievements.length} étape(s) de ceinture
-                  </small>
-                </div>
-                <div className="profile-list-actions">
-                  <button className="profile-primary-button" type="button" onClick={() => restoreProfile(profile)}>
-                    <RefreshCw size={17} /> Utiliser
-                  </button>
-                  <button className="profile-secondary-button" type="button" onClick={() => downloadProfile(profile)}>
-                    <Download size={17} /> Télécharger
-                  </button>
-                  <button
-                    className="profile-delete-button"
-                    type="button"
-                    onClick={() => {
-                      setProfiles(deleteLocalProfile(profile.id));
-                      setMessage(`Le profil « ${profile.name} » a été supprimé de cet appareil.`);
-                    }}
-                    aria-label={`Supprimer le profil ${profile.name}`}
-                  >
-                    <Trash2 size={17} /> Supprimer
-                  </button>
-                </div>
-              </article>
-            ))}
-          </div>
-        )}
+        <input
+          ref={fileInputRef}
+          className="profile-file-input"
+          type="file"
+          accept=".json,.tempomaths-profile.json,application/json"
+          onChange={handleImport}
+        />
+        <div className="profile-json-actions">
+          <button
+            className="profile-secondary-button"
+            type="button"
+            disabled={!selectedProfile}
+            onClick={() => selectedProfile && downloadProfile(selectedProfile)}
+          >
+            <Download size={18} /> Sauvegarder mon profil
+          </button>
+          <button className="profile-primary-button" type="button" onClick={() => fileInputRef.current?.click()}>
+            <FileUp size={18} /> Charger un profil
+          </button>
+          <button
+            className="profile-delete-button"
+            type="button"
+            disabled={!selectedProfile}
+            onClick={removeSelectedProfile}
+          >
+            <Trash2 size={18} /> Supprimer le profil choisi
+          </button>
+        </div>
       </section>
     </div>
   );

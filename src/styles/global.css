@@ -9842,6 +9842,67 @@ body,
 .profile-list-copy small { font-size:.68rem; }
 .profile-list-actions { display:flex; flex-wrap:wrap; justify-content:flex-end; gap:7px; min-width:0; }
 
+.profile-page-simple { width:min(920px,100%); }
+.profile-control-card { gap:18px; }
+.profile-section-title {
+  display:flex;
+  align-items:flex-start;
+  gap:12px;
+  min-width:0;
+}
+.profile-section-title > span {
+  display:grid;
+  place-items:center;
+  width:32px;
+  height:32px;
+  flex:0 0 auto;
+  color:#052f3a;
+  background:linear-gradient(135deg,#a5f3fc,#fde68a);
+  border-radius:10px;
+  font-weight:950;
+}
+.profile-section-title > div { min-width:0; }
+.profile-section-title h2 { margin:0; font-size:1.08rem; overflow-wrap:anywhere; }
+.profile-section-title p { margin:4px 0 0; color:var(--muted); font-size:.78rem; line-height:1.45; overflow-wrap:anywhere; }
+.profile-select-field,
+.profile-save-row { min-width:0; }
+.profile-select-field { display:grid; gap:7px; }
+.profile-select-field > span { color:var(--muted); font-size:.7rem; font-weight:900; text-transform:uppercase; }
+.profile-select-field select {
+  width:100%;
+  min-width:0;
+  min-height:50px;
+  padding:0 40px 0 13px;
+  overflow:hidden;
+  color:var(--text);
+  background:var(--surface-soft);
+  border:1px solid var(--line);
+  border-radius:11px;
+  font-weight:800;
+  text-overflow:ellipsis;
+}
+.profile-selected-details { display:flex; flex-wrap:wrap; gap:7px; }
+.profile-selected-details span {
+  padding:6px 9px;
+  color:var(--muted);
+  background:var(--surface-soft);
+  border-radius:8px;
+  font-size:.7rem;
+  font-weight:750;
+}
+.profile-save-row {
+  display:grid;
+  grid-template-columns:minmax(0,1fr) auto;
+  align-items:end;
+  gap:10px;
+}
+.profile-save-row > button { min-height:46px; }
+.profile-json-actions { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:9px; min-width:0; }
+.profile-json-actions button { width:100%; }
+.profile-primary-button:disabled,
+.profile-secondary-button:disabled,
+.profile-delete-button:disabled { opacity:.45; cursor:not-allowed; }
+
 @media (max-width:1000px) {
   .profile-summary { grid-template-columns:repeat(2,minmax(0,1fr)); }
   .profile-grid { grid-template-columns:1fr; }
@@ -9865,6 +9926,9 @@ body,
   .profile-actions button,
   .profile-list-actions button,
   .profile-import-card > .profile-primary-button { width:100%; }
+  .profile-save-row,
+  .profile-json-actions { grid-template-columns:1fr; }
+  .profile-save-row > button { width:100%; }
 }
 
 @media (max-width:390px) {
