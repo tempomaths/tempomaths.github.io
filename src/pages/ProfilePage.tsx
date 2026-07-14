@@ -1,5 +1,5 @@
 import { useMemo, useRef, useState, type ChangeEvent } from "react";
-import { CheckCircle2, Download, FileUp, Save, Trash2, UserRound } from "lucide-react";
+import { CheckCircle2, ChevronDown, Download, FileUp, Save, Trash2, UserRound } from "lucide-react";
 import type { StoredPayload, TempoMathsProfile } from "../types";
 import {
   createProfile,
@@ -45,6 +45,7 @@ export function ProfilePage({ stored, onRestore }: ProfilePageProps) {
   const [profileName, setProfileName] = useState("Mon profil TempoMaths");
   const [profiles, setProfiles] = useState<TempoMathsProfile[]>(initialProfiles);
   const [selectedProfileId, setSelectedProfileId] = useState("");
+  const [profileMenuOpen, setProfileMenuOpen] = useState(false);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -59,6 +60,7 @@ export function ProfilePage({ stored, onRestore }: ProfilePageProps) {
   const activateProfile = (profile: TempoMathsProfile) => {
     clearStatus();
     setSelectedProfileId(profile.id);
+    setProfileMenuOpen(false);
     onRestore(profile.payload);
     setMessage(`Le profil « ${profile.name} » est maintenant actif.`);
   };
@@ -71,11 +73,6 @@ export function ProfilePage({ stored, onRestore }: ProfilePageProps) {
     setSelectedProfileId(profile.id);
     setProfileName(profile.name);
     setMessage(`Le profil « ${profile.name} » est enregistré.`);
-  };
-
-  const handleProfileSelection = (event: ChangeEvent<HTMLSelectElement>) => {
-    const profile = profiles.find((item) => item.id === event.target.value);
-    if (profile) activateProfile(profile);
   };
 
   const handleImport = async (event: ChangeEvent<HTMLInputElement>) => {
@@ -95,12 +92,12 @@ export function ProfilePage({ stored, onRestore }: ProfilePageProps) {
     }
   };
 
-  const removeSelectedProfile = () => {
-    if (!selectedProfile) return;
-    const nextProfiles = deleteLocalProfile(selectedProfile.id);
+  const removeProfile = (profile: TempoMathsProfile) => {
+    const nextProfiles = deleteLocalProfile(profile.id);
     setProfiles(nextProfiles);
-    setSelectedProfileId("");
-    setMessage(`Le profil « ${selectedProfile.name} » a été supprimé.`);
+    if (selectedProfileId === profile.id) setSelectedProfileId("");
+    if (nextProfiles.length === 0) setProfileMenuOpen(false);
+    setMessage(`Le profil « ${profile.name} » a été supprimé.`);
   };
 
   return (
@@ -130,17 +127,48 @@ export function ProfilePage({ stored, onRestore }: ProfilePageProps) {
           </div>
         </div>
 
-        <label className="profile-select-field">
+        <div className="profile-select-field">
           <span>Profil enregistré</span>
-          <select value={selectedProfileId} onChange={handleProfileSelection}>
-            <option value="" disabled>{profiles.length ? "Choisir un profil…" : "Aucun profil enregistré"}</option>
-            {profiles.map((profile) => (
-              <option key={profile.id} value={profile.id}>
-                {profile.name} — {formatDate(profile.savedAt)}
-              </option>
-            ))}
-          </select>
-        </label>
+          <div className={profileMenuOpen ? "profile-menu open" : "profile-menu"}>
+            <button
+              className="profile-menu-trigger"
+              type="button"
+              disabled={profiles.length === 0}
+              aria-expanded={profileMenuOpen}
+              onClick={() => setProfileMenuOpen((open) => !open)}
+            >
+              <span>{selectedProfile?.name ?? (profiles.length ? "Choisir un profil…" : "Aucun profil enregistré")}</span>
+              <ChevronDown size={19} />
+            </button>
+            {profileMenuOpen && (
+              <div className="profile-menu-list" role="listbox" aria-label="Profils enregistrés">
+                {profiles.map((profile) => (
+                  <div className="profile-menu-row" key={profile.id}>
+                    <button
+                      className="profile-menu-option"
+                      type="button"
+                      role="option"
+                      aria-selected={profile.id === selectedProfileId}
+                      onClick={() => activateProfile(profile)}
+                    >
+                      <strong>{profile.name}</strong>
+                      <span>{formatDate(profile.savedAt)}</span>
+                    </button>
+                    <button
+                      className="profile-menu-trash"
+                      type="button"
+                      aria-label={`Supprimer le profil ${profile.name}`}
+                      title={`Supprimer ${profile.name}`}
+                      onClick={() => removeProfile(profile)}
+                    >
+                      <Trash2 size={18} />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
 
         {selectedProfile && (
           <div className="profile-selected-details">
@@ -200,14 +228,6 @@ export function ProfilePage({ stored, onRestore }: ProfilePageProps) {
           </button>
           <button className="profile-primary-button" type="button" onClick={() => fileInputRef.current?.click()}>
             <FileUp size={18} /> Charger un profil
-          </button>
-          <button
-            className="profile-delete-button"
-            type="button"
-            disabled={!selectedProfile}
-            onClick={removeSelectedProfile}
-          >
-            <Trash2 size={18} /> Supprimer le profil choisi
           </button>
         </div>
       </section>
